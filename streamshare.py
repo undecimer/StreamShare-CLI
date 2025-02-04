@@ -41,20 +41,22 @@ def fetch_livestream_details(username):
         stream = twitch.get_streams(user_id=user_id)
         if not stream.data:
             return None
+        game = twitch.get_games(game_ids=[stream.data[0].game_id])
         return {
             'url': f'https://www.twitch.tv/{username}',
             'category': stream.data[0].game_name,
-            'title': stream.data[0].title
+            'title': stream.data[0].title,
+            'box_art_url': game.data[0].box_art_url.replace('{width}x{height}', '1080x1920')
         }
     except Exception as e:
         print(f'Error fetching livestream details: {e}')
         return None
 
 # Post to Instagram Stories
-def post_to_instagram_story(stream_url, category, title):
+def post_to_instagram_story(stream_url, category, title, box_art_url):
     try:
         story = instagram.story_photo(
-            photo='https://via.placeholder.com/1080x1920.png?text=Twitch+Livestream',
+            photo=box_art_url,
             caption=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
         )
         print(f'Posted to Instagram Stories: {story.id}')
@@ -62,7 +64,7 @@ def post_to_instagram_story(stream_url, category, title):
         print(f'Error posting to Instagram Stories: {e}')
 
 # Post to Twitter
-def post_to_tweet(stream_url, category, title):
+def post_to_tweet(stream_url, category, title, box_art_url):
     try:
         tweet = twitter.create_tweet(
             text=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
@@ -75,8 +77,8 @@ def post_to_tweet(stream_url, category, title):
 def main():
     stream_details = fetch_livestream_details('your_twitch_username')
     if stream_details:
-        post_to_instagram_story(stream_details['url'], stream_details['category'], stream_details['title'])
-        post_to_tweet(stream_details['url'], stream_details['category'], stream_details['title'])
+        post_to_instagram_story(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['box_art_url'])
+        post_to_tweet(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['box_art_url'])
 
 if __name__ == '__main__':
     main()
