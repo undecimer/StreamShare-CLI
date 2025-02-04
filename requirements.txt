@@ -1,3 +1,4 @@
 twitchAPI
 instagrapi
 tweepy
+pillow

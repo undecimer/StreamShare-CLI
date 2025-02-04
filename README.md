@@ -4,6 +4,8 @@ StreamShare is a Python application that shares Twitch livestream links to Insta
 
 ## Features
 - Fetch Twitch livestream details (URL, category, and title).
+- Fetch the category image in its original resolution.
+- Crop the image to fit Instagram Stories (1080x1920) or Twitter (1280x720) while preserving the aspect ratio.
 - Post livestream links to Instagram Stories.
 - Post livestream links as tweets on Twitter.
 
