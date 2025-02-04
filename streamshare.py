@@ -1,6 +1,9 @@
 from twitchAPI.twitch import Twitch
 from instagrapi import Client
 import tweepy
+from PIL import Image
+import requests
+from io import BytesIO
 
 # Twitch API credentials
 TWITCH_CLIENT_ID = 'your_twitch_client_id'
@@ -46,30 +49,51 @@ def fetch_livestream_details(username):
             'url': f'https://www.twitch.tv/{username}',
             'category': stream.data[0].game_name,
             'title': stream.data[0].title,
-            'box_art_url': game.data[0].box_art_url.replace('{width}x{height}', '1080x1920')
+            'box_art_url': game.data[0].box_art_url.replace('{width}x{height}', '1080x1920'),
+            'original_box_art_url': game.data[0].box_art_url.replace('{width}x{height}', '1920x1080')
         }
     except Exception as e:
         print(f'Error fetching livestream details: {e}')
         return None
 
+# Resize image based on destination
+def resize_image(image_url, destination):
+    try:
+        response = requests.get(image_url)
+        image = Image.open(BytesIO(response.content))
+        if destination == 'instagram':
+            return image.resize((1080, 1920))
+        elif destination == 'twitter':
+            return image.resize((1280, 720))
+        return image
+    except Exception as e:
+        print(f'Error resizing image: {e}')
+        return None
+
 # Post to Instagram Stories
 def post_to_instagram_story(stream_url, category, title, box_art_url):
     try:
-        story = instagram.story_photo(
-            photo=box_art_url,
-            caption=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
-        )
-        print(f'Posted to Instagram Stories: {story.id}')
+        resized_image = resize_image(box_art_url, 'instagram')
+        if resized_image:
+            story = instagram.story_photo(
+                photo=resized_image,
+                caption=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
+            )
+            print(f'Posted to Instagram Stories: {story.id}')
     except Exception as e:
         print(f'Error posting to Instagram Stories: {e}')
 
 # Post to Twitter
-def post_to_tweet(stream_url, category, title, box_art_url):
+def post_to_twitter(stream_url, category, title, box_art_url):
     try:
-        tweet = twitter.create_tweet(
-            text=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
-        )
-        print(f'Posted to Twitter: {tweet.data["id"]}')
+        resized_image = resize_image(box_art_url, 'twitter')
+        if resized_image:
+            media = twitter.media_upload('image.jpg', resized_image)
+            tweet = twitter.create_tweet(
+                text=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}',
+                media_ids=[media.media_id]
+            )
+            print(f'Posted to Twitter: {tweet.data["id"]}')
     except Exception as e:
         print(f'Error posting to Twitter: {e}')
 
@@ -77,8 +101,8 @@ def post_to_tweet(stream_url, category, title, box_art_url):
 def main():
     stream_details = fetch_livestream_details('your_twitch_username')
     if stream_details:
-        post_to_instagram_story(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['box_art_url'])
-        post_to_tweet(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['box_art_url'])
+        post_to_instagram_story(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['original_box_art_url'])
+        post_to_twitter(stream_details['url'], stream_details['category'], stream_details['title'], stream_details['original_box_art_url'])
 
 if __name__ == '__main__':
     main()
