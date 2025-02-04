@@ -56,15 +56,32 @@ def fetch_livestream_details(username):
         print(f'Error fetching livestream details: {e}')
         return None
 
-# Resize image based on destination
+# Crop image based on destination
 def resize_image(image_url, destination):
     try:
         response = requests.get(image_url)
         image = Image.open(BytesIO(response.content))
+        width, height = image.size
         if destination == 'instagram':
-            return image.resize((1080, 1920))
+            # Crop to 1080x1920 (portrait)
+            new_width = min(width, int(height * (1080 / 1920)))
+            new_height = min(height, int(width * (1920 / 1080)))
+            left = (width - new_width) / 2
+            top = (height - new_height) / 2
+            right = (width + new_width) / 2
+            bottom = (height + new_height) / 2
+            cropped_image = image.crop((left, top, right, bottom))
+            return cropped_image.resize((1080, 1920))
         elif destination == 'twitter':
-            return image.resize((1280, 720))
+            # Crop to 1280x720 (landscape)
+            new_width = min(width, int(height * (1280 / 720)))
+            new_height = min(height, int(width * (720 / 1280)))
+            left = (width - new_width) / 2
+            top = (height - new_height) / 2
+            right = (width + new_width) / 2
+            bottom = (height + new_height) / 2
+            cropped_image = image.crop((left, top, right, bottom))
+            return cropped_image.resize((1280, 720))
         return image
     except Exception as e:
         print(f'Error resizing image: {e}')
