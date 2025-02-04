@@ -4,6 +4,19 @@ import tweepy
 from PIL import Image
 import requests
 from io import BytesIO
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('streamshare.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 # Twitch API credentials
 TWITCH_CLIENT_ID = 'your_twitch_client_id'
@@ -20,31 +33,49 @@ TWITTER_ACCESS_TOKEN = 'your_twitter_access_token'
 TWITTER_ACCESS_TOKEN_SECRET = 'your_twitter_access_token_secret'
 
 # Initialize Twitch API
-twitch = Twitch(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET)
+try:
+    twitch = Twitch(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET)
+    logger.info('Twitch API initialized successfully')
+except Exception as e:
+    logger.error(f'Failed to initialize Twitch API: {e}')
+    raise
 
 # Initialize Instagram client
-instagram = Client()
-instagram.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+try:
+    instagram = Client()
+    instagram.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+    logger.info('Instagram client initialized successfully')
+except Exception as e:
+    logger.error(f'Failed to initialize Instagram client: {e}')
+    raise
 
 # Initialize Twitter client
-twitter = tweepy.Client(
-    consumer_key=TWITTER_API_KEY,
-    consumer_secret=TWITTER_API_SECRET,
-    access_token=TWITTER_ACCESS_TOKEN,
-    access_token_secret=TWITTER_ACCESS_TOKEN_SECRET
-)
+try:
+    twitter = tweepy.Client(
+        consumer_key=TWITTER_API_KEY,
+        consumer_secret=TWITTER_API_SECRET,
+        access_token=TWITTER_ACCESS_TOKEN,
+        access_token_secret=TWITTER_ACCESS_TOKEN_SECRET
+    )
+    logger.info('Twitter client initialized successfully')
+except Exception as e:
+    logger.error(f'Failed to initialize Twitter client: {e}')
+    raise
 
 # Fetch livestream details
 def fetch_livestream_details(username):
     try:
         user = twitch.get_users(logins=[username])
         if not user.data:
+            logger.warning(f'No user found with username: {username}')
             return None
         user_id = user.data[0].id
         stream = twitch.get_streams(user_id=user_id)
         if not stream.data:
+            logger.warning(f'No active stream found for user: {username}')
             return None
         game = twitch.get_games(game_ids=[stream.data[0].game_id])
+        logger.info(f'Successfully fetched livestream details for {username}')
         return {
             'url': f'https://www.twitch.tv/{username}',
             'category': stream.data[0].game_name,
@@ -53,13 +84,14 @@ def fetch_livestream_details(username):
             'original_box_art_url': game.data[0].box_art_url.replace('{width}x{height}', '1920x1080')
         }
     except Exception as e:
-        print(f'Error fetching livestream details: {e}')
+        logger.error(f'Error fetching livestream details: {e}')
         return None
 
 # Crop image based on destination
 def resize_image(image_url, destination):
     try:
         response = requests.get(image_url)
+        response.raise_for_status()
         image = Image.open(BytesIO(response.content))
         width, height = image.size
         if destination == 'instagram':
@@ -84,7 +116,7 @@ def resize_image(image_url, destination):
             return cropped_image.resize((1280, 720))
         return image
     except Exception as e:
-        print(f'Error resizing image: {e}')
+        logger.error(f'Error resizing image: {e}')
         return None
 
 # Post to Instagram Stories
@@ -96,9 +128,9 @@ def post_to_instagram_story(stream_url, category, title, box_art_url):
                 photo=resized_image,
                 caption=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}'
             )
-            print(f'Posted to Instagram Stories: {story.id}')
+            logger.info(f'Posted to Instagram Stories: {story.id}')
     except Exception as e:
-        print(f'Error posting to Instagram Stories: {e}')
+        logger.error(f'Error posting to Instagram Stories: {e}')
 
 # Post to Twitter
 def post_to_twitter(stream_url, category, title, box_art_url):
@@ -110,9 +142,9 @@ def post_to_twitter(stream_url, category, title, box_art_url):
                 text=f'🎥 Live Now: {title}\n\nCategory: {category}\n\nWatch here: {stream_url}',
                 media_ids=[media.media_id]
             )
-            print(f'Posted to Twitter: {tweet.data["id"]}')
+            logger.info(f'Posted to Twitter: {tweet.data["id"]}')
     except Exception as e:
-        print(f'Error posting to Twitter: {e}')
+        logger.error(f'Error posting to Twitter: {e}')
 
 # Main function
 def main():
