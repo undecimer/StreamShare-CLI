@@ -14,3 +14,11 @@ __pycache__/
 
 # Logs
 *.log
+
+# Generated/Cached Assets
+generated_images/
+artwork_images/
+pending_tweets/
+
+# Instagram Session Caches
+instagram_session*.json
