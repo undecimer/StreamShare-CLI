@@ -189,7 +189,7 @@ class TwitterClient(BasePlatform):
         try:
             if not self.client:
                 await self.authenticate()
-            me = await self.client.get_me()
+            me = await asyncio.to_thread(self.client.get_me)
             if me and me.data:
                 logger.info(f"Twitter credentials validated successfully for account '{self.account_id}'")
                 return True
