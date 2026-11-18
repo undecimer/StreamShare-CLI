@@ -5,7 +5,7 @@ import os
 # Ensure the project root is in the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.__main__ import main
+from backend.cli import main
 
 if __name__ == '__main__':
     main()

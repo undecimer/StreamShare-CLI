@@ -1,11 +1,15 @@
-twitchAPI>=3.11.0
-instagrapi>=2.3.0
-tweepy>=4.14.0
-Pillow>=10.2.0
-python-dotenv>=1.0.1
-requests>=2.32.4
-TikTokLive>=6.6.5
-aiohttp>=3.9.1
-pyotp>=2.9.0
-yt-dlp
-typing-extensions>=4.9.0
+# Core dependencies — pinned to the versions verified in the OneSite
+# ecosystem deployment for reproducible installs.
+twitchAPI==4.5.0
+instagrapi==3.2.15
+tweepy==4.17.0
+Pillow==13.0.0
+python-dotenv==1.2.4
+requests==2.34.2
+TikTokLive==7.0.1
+aiohttp==3.14.5
+cryptography==50.0.2
+yt-dlp==2026.10.26
+
+# Type hints support
+typing-extensions==4.16.0
