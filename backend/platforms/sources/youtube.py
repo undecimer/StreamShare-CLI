@@ -27,7 +27,9 @@ class YoutubeSource(StreamSource):
     def __init__(self, config: Config = None, user_settings: Dict[str, Any] = None):
         self.config = config
         self.user_settings = user_settings or {}
-        self.api_key = self.user_settings.get('youtube_api_key')
+        self.api_key = self.user_settings.get('youtube_api_key') or (
+            self.config.get('youtube_api_key') if self.config else None
+        )
         self.base_url = "https://www.googleapis.com/youtube/v3"
         self._category_cache = {}
 
