@@ -20,5 +20,8 @@ generated_images/
 artwork_images/
 pending_tweets/
 
-# Instagram Session Caches
+# Local data store (artwork cache DB, secrets, encrypted sessions)
+data/
+
+# Instagram Session Caches (legacy plaintext; new sessions live in data/sessions/)
 instagram_session*.json
