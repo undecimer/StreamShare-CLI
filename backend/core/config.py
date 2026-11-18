@@ -98,15 +98,31 @@ class Config:
         if not self._initialized:
             load_dotenv()
             
+            # Legacy single-account variable names per platform prefix. These
+            # collide with the <PREFIX><ID>_<FIELD> scheme (e.g. TWITTER_API_KEY
+            # would parse as account 'api', field 'key'), so they're skipped in
+            # multi-account parsing and handled by the 'default' fallbacks below.
+            LEGACY_KEYS = {
+                'INSTAGRAM_': {'username', 'password', 'totp_secret', 'sessionid',
+                               'session_settings', 'enabled'},
+                'TWITTER_': {'api_key', 'api_secret', 'access_token',
+                             'access_token_secret', 'enabled'},
+                'DISCORD_': {'webhook_url', 'enabled'},
+            }
+
             # Helper to group environment variables by prefix and identifier
             def get_account_configs(prefix: str) -> Dict[str, Dict[str, str]]:
                 accounts = {}
+                legacy = LEGACY_KEYS.get(prefix, set())
                 # Get all env vars starting with the prefix
                 for key, value in os.environ.items():
                     if key.startswith(prefix):
+                        remainder = key[len(prefix):].lower()
+                        if remainder in legacy:
+                            continue
                         # Extract the identifier and property name
                         # e.g., INSTAGRAM_MYACCOUNT_USERNAME -> ('myaccount', 'username')
-                        parts = key[len(prefix):].lower().split('_', 1)
+                        parts = remainder.split('_', 1)
                         if len(parts) == 2:
                             account_id, prop = parts
                             if account_id not in accounts:
@@ -136,7 +152,14 @@ class Config:
                 'media': {
                     'font_path': os.path.join(_source_assets_dir(), 'fonts', 'Roboto-Regular.ttf'),
                     'logo_path': os.path.join(_source_assets_dir(), 'images'),
-                }
+                },
+
+                # Stream-source credentials the sources read as flat keys
+                'tiktok_session_id': os.getenv('TIKTOK_SESSION_ID'),
+                'tiktok_target_idc': os.getenv('TIKTOK_TARGET_IDC'),
+                'tiktok_sign_host': os.getenv('TIKTOK_SIGN_HOST'),
+                'youtube_api_key': os.getenv('YOUTUBE_API_KEY'),
+                'kick': {},
             }
 
             # Load multi-account configurations
